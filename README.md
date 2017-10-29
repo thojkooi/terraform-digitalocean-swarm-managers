@@ -2,6 +2,8 @@
 
 Terraform module to provision and bootstrap a Docker Swarm mode cluster with multiple managers using a private network on DigitalOcean.
 
+[![CircleCI](https://circleci.com/gh/thojkooi/terraform-digitalocean-swarm-managers/tree/master.svg?style=svg)](https://circleci.com/gh/thojkooi/terraform-digitalocean-swarm-managers/tree/master)
+
 - [Requirements](#requirements)
 - [Usage](#usage)
 - [Examples](#examples)
