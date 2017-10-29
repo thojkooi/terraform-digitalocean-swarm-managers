@@ -21,14 +21,13 @@ resource "digitalocean_tag" "worker" {
 }
 
 module "swarm-cluster-managers" {
-  source         = "../../"
-  total_managers = 1
-  total_workers  = 1
-  domain         = "do.example.com"
-  do_token       = "${var.do_token}"
-  ssh_keys       = "${var.ssh_keys}"
-  image          = "centos-7-x64"
-  provision_user = "root"
-  user_data      = "${file("scripts/install-docker-ce.sh")}"
-  tags           = ["${digitalocean_tag.cluster.id}", "${digitalocean_tag.manager.id}"]
+  source          = "../../"
+  total_instances = 1
+  domain          = "do.example.com"
+  do_token        = "${var.do_token}"
+  ssh_keys        = "${var.ssh_keys}"
+  image           = "centos-7-x64"
+  provision_user  = "root"
+  user_data       = "${file("scripts/install-docker-ce.sh")}"
+  tags            = ["${digitalocean_tag.cluster.id}", "${digitalocean_tag.manager.id}"]
 }
