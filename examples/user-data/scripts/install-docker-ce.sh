@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Insstall requirements for Docker
+# Install requirements for Docker
 yum -y update
 yum install -y yum-utils device-mapper-persistent-data lvm2
 
