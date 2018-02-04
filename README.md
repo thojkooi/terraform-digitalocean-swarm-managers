@@ -10,7 +10,7 @@ Terraform module to provision and bootstrap a Docker Swarm mode cluster with mul
 
 ## Requirements
 
-- Terraform >= 0.10.6
+- Terraform >= 0.11.2
 - Digitalocean account / API token with write access
 - SSH Keys added to your DigitalOcean account
 - [jq](https://github.com/stedolan/jq)

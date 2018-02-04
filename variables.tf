@@ -38,7 +38,7 @@ variable "image" {
 
 variable "size" {
   description = "Droplet size of manager nodes"
-  default     = "512mb"
+  default     = "s-1vcpu-1gb"
 }
 
 variable "name" {

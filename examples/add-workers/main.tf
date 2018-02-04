@@ -22,7 +22,7 @@ module "workers" {
   source   = "github.com/thojkooi/terraform-digitalocean-swarm-workers"
   do_token = "${var.do_token}"
 
-  size            = "512mb"
+  size            = "s-1vcpu-1gb"
   name            = "web"
   region          = "ams3"
   domain          = "do.example.com"
