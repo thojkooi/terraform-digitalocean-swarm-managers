@@ -24,10 +24,10 @@ resource "digitalocean_droplet" "manager" {
 
   provisioner "remote-exec" {
     inline = [
-      "while [ ! $(sudo docker info) ]; do sleep 2; done",
+      "while [ ! $(${var.docker_cmd} info) ]; do sleep 2; done",
 
       # TODO: Handle failure during swarm init, only run this if manager node is not in a swarm
-      "if [ ${count.index} -eq 0 ]; then sudo docker swarm init --advertise-addr ${digitalocean_droplet.manager.0.ipv4_address_private}; exit 0; fi",
+      "if [ ${count.index} -eq 0 ]; then ${var.docker_cmd} swarm init --advertise-addr ${digitalocean_droplet.manager.0.ipv4_address_private}; exit 0; fi",
     ]
   }
 }
@@ -60,8 +60,8 @@ resource "null_resource" "bootstrap" {
 
   provisioner "remote-exec" {
     inline = [
-      "while [ ! $(sudo docker info) ]; do sleep 2; done",
-      "if [ ${count.index} -gt 0 ] && [! sudo docker info | grep -q \"Swarm: active\" ]; then sudo docker swarm join --token ${lookup(data.external.swarm_tokens.result, "manager")} ${element(digitalocean_droplet.manager.*.ipv4_address_private, 0)}:2377; exit 0; fi",
+      "while [ ! $(${var.docker_cmd} info) ]; do sleep 2; done",
+      "if [ ${count.index} -gt 0 ] && [! ${var.docker_cmd} info | grep -q \"Swarm: active\" ]; then ${var.docker_cmd} swarm join --token ${lookup(data.external.swarm_tokens.result, "manager")} ${element(digitalocean_droplet.manager.*.ipv4_address_private, 0)}:2377; exit 0; fi",
     ]
   }
 }
