@@ -56,6 +56,11 @@ variable "user_data" {
   default     = ""
 }
 
+variable "docker_cmd" {
+  description = "Docker command"
+  default     = "sudo docker"
+}
+
 variable "tags" {
   description = "List of DigitalOcean tag ids"
   default     = []
