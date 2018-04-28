@@ -1,5 +1,19 @@
-provider "digitalocean" {
-  token = "${var.do_token}"
+data "template_file" "provision_first_manager" {
+  template = "${file("${path.module}/scripts/provision-first-manager.sh")}"
+
+  vars {
+    docker_cmd   = "${var.docker_cmd}"
+    availability = "${var.availability}"
+  }
+}
+
+data "template_file" "provision_manager" {
+  template = "${file("${path.module}/scripts/provision-manager.sh")}"
+
+  vars {
+    docker_cmd   = "${var.docker_cmd}"
+    availability = "${var.availability}"
+  }
 }
 
 resource "digitalocean_droplet" "manager" {
@@ -22,18 +36,83 @@ resource "digitalocean_droplet" "manager" {
     timeout     = "2m"
   }
 
+  provisioner "file" {
+    content     = "${data.template_file.provision_first_manager.rendered}"
+    destination = "/tmp/provision-first-manager.sh"
+  }
+
   provisioner "remote-exec" {
     inline = [
-      "while [ ! $(${var.docker_cmd} info) ]; do sleep 2; done",
+      "chmod +x /tmp/provision-first-manager.sh",
+      "if [ ${count.index} -eq 0 ]; then /tmp/provision-first-manager.sh ${self.ipv4_address_private}; fi",
+    ]
+  }
 
-      # TODO: Handle failure during swarm init, only run this if manager node is not in a swarm
-      "if [ ${count.index} -eq 0 ]; then ${var.docker_cmd} swarm init --advertise-addr ${digitalocean_droplet.manager.0.ipv4_address_private}; exit 0; fi",
+  provisioner "remote-exec" {
+    when = "destroy"
+
+    inline = [
+      "timeout 25 docker swarm leave",
+    ]
+
+    on_failure = "continue"
+  }
+}
+
+# Optionally expose Docker API using certificates
+resource "null_resource" "manager_api_access" {
+  count = "${var.remote_api_key == "" || var.remote_api_certificate == "" || var.remote_api_ca == "" ? 0 : var.total_instances}"
+
+  triggers {
+    cluster_instance_ids = "${join(",", digitalocean_droplet.manager.*.id)}"
+    certificate          = "${md5(file("${var.remote_api_certificate}"))}"
+  }
+
+  connection {
+    host        = "${element(digitalocean_droplet.manager.*.ipv4_address, count.index)}"
+    type        = "ssh"
+    user        = "${var.provision_user}"
+    private_key = "${file("${var.provision_ssh_key}")}"
+    timeout     = "2m"
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "mkdir -p ~/.docker",
+    ]
+  }
+
+  provisioner "file" {
+    source      = "${var.remote_api_ca}"
+    destination = "~/.docker/ca.pem"
+  }
+
+  provisioner "file" {
+    source      = "${var.remote_api_certificate}"
+    destination = "~/.docker/server-cert.pem"
+  }
+
+  provisioner "file" {
+    source      = "${var.remote_api_key}"
+    destination = "~/.docker/server-key.pem"
+  }
+
+  provisioner "file" {
+    source      = "${path.module}/scripts/certs/default.sh"
+    destination = "~/.docker/install_certificates.sh"
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "chmod +x ~/.docker/install_certificates.sh",
+      "~/.docker/install_certificates.sh",
     ]
   }
 }
 
 data "external" "swarm_tokens" {
-  program = ["bash", "${path.module}/scripts/get-swarm-join-tokens.sh"]
+  program    = ["bash", "${path.module}/scripts/get-swarm-join-tokens.sh"]
+  depends_on = ["null_resource.manager_api_access"]
 
   query = {
     host        = "${element(digitalocean_droplet.manager.*.ipv4_address, 0)}"
@@ -42,9 +121,9 @@ data "external" "swarm_tokens" {
   }
 }
 
-#
 resource "null_resource" "bootstrap" {
-  count = "${var.total_instances}"
+  count      = "${var.total_instances}"
+  depends_on = ["null_resource.manager_api_access"]
 
   triggers {
     cluster_instance_ids = "${join(",", digitalocean_droplet.manager.*.id)}"
@@ -58,10 +137,15 @@ resource "null_resource" "bootstrap" {
     timeout     = "2m"
   }
 
+  provisioner "file" {
+    content     = "${data.template_file.provision_manager.rendered}"
+    destination = "/tmp/provision-manager.sh"
+  }
+
   provisioner "remote-exec" {
     inline = [
-      "while [ ! $(${var.docker_cmd} info) ]; do sleep 2; done",
-      "if [ ${count.index} -gt 0 ] && [! ${var.docker_cmd} info | grep -q \"Swarm: active\" ]; then ${var.docker_cmd} swarm join --token ${lookup(data.external.swarm_tokens.result, "manager")} ${element(digitalocean_droplet.manager.*.ipv4_address_private, 0)}:2377; exit 0; fi",
+      "chmod +x /tmp/provision-manager.sh",
+      "/tmp/provision-manager.sh ${digitalocean_droplet.manager.0.ipv4_address_private} ${lookup(data.external.swarm_tokens.result, "manager")}",
     ]
   }
 }

@@ -14,4 +14,5 @@ yum -y install docker-ce
 
 sleep 1;
 
+systemctl enable docker
 systemctl start docker

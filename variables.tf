@@ -1,7 +1,3 @@
-variable "do_token" {
-  description = "DigitalOcean API token with read/write permissions"
-}
-
 variable "domain" {
   description = "Domain name used in droplet hostnames, e.g example.com"
 }
@@ -65,4 +61,21 @@ variable "tags" {
   description = "List of DigitalOcean tag ids"
   default     = []
   type        = "list"
+}
+
+variable "availability" {
+  description = "Availability of the node ('active'|'pause'|'drain')"
+  default     = "active"
+}
+
+variable "remote_api_ca" {
+  default = ""
+}
+
+variable "remote_api_key" {
+  default = ""
+}
+
+variable "remote_api_certificate" {
+  default = ""
 }

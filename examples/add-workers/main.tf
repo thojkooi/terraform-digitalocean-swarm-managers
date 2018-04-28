@@ -29,7 +29,7 @@ module "workers" {
   total_instances = 1
   ssh_keys        = "${var.ssh_keys}"
 
-  manager_public_ip  = "${module.swarm-cluster-managers.ipv4_addresses[0]}"
-  manager_private_ip = "${module.swarm-cluster-managers.ipv4_addresses_private[0]}"
+  manager_public_ip  = "${element(module.swarm-cluster-managers.ipv4_addresses, 0)}"
+  manager_private_ip = "${element(module.swarm-cluster-managers.ipv4_addresses_private, 0)}"
   join_token         = "${module.swarm-cluster-managers.worker_token}"
 }
