@@ -37,7 +37,7 @@ You can expose the Docker API to interact with the cluster remotely. This is don
 
 ```hcl
 module "swarm_mode_cluster" {
-  source          = "github.com/thojkooi/terraform-digitalocean-swarm-managers?ref=v0.3.0"
+  source          = "github.com/thojkooi/terraform-digitalocean-swarm-managers?ref=v0.2.0"
 
   domain          = "do.example.com"
   total_instances = 3
