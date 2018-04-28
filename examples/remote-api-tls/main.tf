@@ -13,7 +13,7 @@ resource "digitalocean_tag" "manager" {
 }
 
 module "managers" {
-  source = "github.com/thojkooi/terraform-digitalocean-swarm-managers?ref=support-remote-api"
+  source = "github.com/thojkooi/terraform-digitalocean-swarm-managers?ref=v0.2.0"
 
   domain          = "do.example.com"
   total_instances = 3
